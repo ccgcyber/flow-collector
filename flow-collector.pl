@@ -1,12 +1,10 @@
 #!/usr/bin/perl -w
 ###############################################################################
-# Coletor e analisador de datagramas Netflow com integracao com:
+# Netflow datagram collector and parser with integration with:
 #           NMAP API
 #           REPUTATION API
 #
 ###############################################################################
-#
-# @ Manoel Domingues Junior mdjunior@ufrj.br
 #
 ###############################################################################
 
@@ -17,7 +15,6 @@ use Socket;
 use Carp;
 use POSIX qw(strftime);
 use Readonly;
-use Net::Syslog;
 use Sys::Syslog;
 use Net::Subnet;
 use Mojo::UserAgent;
@@ -56,20 +53,10 @@ Readonly my $TCP_CODE              => 6;
 sub log_wrapper {
     my $log = shift;
 
-    if ($ENV{FLOW_COLLECTOR_LOG} eq 'LOCAL') {
-        openlog('FLOW_COLLECTOR', 'ndelay,pid', 'LOG_LOCAL0');
-        syslog('LOG_INFO', $log);
-        closelog();
-    } elsif ($ENV{FLOW_COLLECTOR_LOG} eq 'NET') {
-        my $log_net = Net::Syslog->new(
-                                Name => 'FLOW_COLLECTOR',
-                                Facility => 'local7',
-                                Priority => 'info',
-                                SyslogPort => $ENV{FLOW_COLLECTOR_SYSLOG_PORT},
-                                SyslogHost => $ENV{FLOW_COLLECTOR_SYSLOG_HOST},
-                                );
-        $log_net->send($log);
-    }
+    openlog('FLOW_COLLECTOR', 'ndelay,pid', 'LOG_LOCAL0');
+    syslog('LOG_INFO', $log);
+    closelog();
+
     return;
 }
 
@@ -294,22 +281,22 @@ sub verifica_reputacao {
     my $proto = $flow->{protocol};
 
     if ($proto == $TCP_CODE) {
-        if ( $flow->{tcp_flags} ) { # Olhando pacotes com flags
+        if ( $flow->{tcp_flags} ) { # Looking packages with flags
             log_wrapper("action=|verifica_reputacao| fase=|fase1| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp| flags=|$flags|");
 
             my @network = split / /, $ENV{FLOW_CONNECTOR_NETWORK};
             my $classif_network = subnet_matcher(@network);
 
-            if ( $classif_network->($src) ) { # CONEXOES DE DENTRO PARA FORA
+            if ( $classif_network->($src) ) { # INSIDE CONNECTIONS OUT
                 my @dst_trusted = split / /, $ENV{FLOW_CONNECTOR_DST_TRUSTED};
                 my $classif_dst_trusted = subnet_matcher(@dst_trusted);
 
-                # DESTINOS CONFIAVEIS
+                # DIFFERENT DESTINATIONS
                 if ( $classif_dst_trusted->($dst) ) {
                     log_wrapper("action=|verifica_reputacao| fase=|descartado| info=|dst_confiavel| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
                     return;
 
-                # DESTINOS CONHECIDAMENTE SUSPEITOS OU MALICIOSOS
+                # KNOWN OR SUSPENDED DESTINATIONS
                 } elsif ( reputation($dst) =~ /malicious/ ) {
                     my $reputation = submit_reputation($src,'infected','scan');
                     my $flow_result = submit_flow($flow,'infected','scan');
@@ -322,7 +309,7 @@ sub verifica_reputacao {
                     return;
                 }
 
-            } elsif ( $classif_network->($dst) ) { # CONEXOES DE FORA PARA DENTRO
+            } elsif ( $classif_network->($dst) ) { # CONNECTIONS FROM OUT TO
                 my @src_trusted = split / /, $ENV{FLOW_CONNECTOR_SRC_TRUSTED};
                 my $classif_src_trusted = subnet_matcher(@src_trusted);
 
@@ -332,33 +319,33 @@ sub verifica_reputacao {
                 my @darknet = split / /, $ENV{FLOW_CONNECTOR_DARKNET};
                 my $classif_darnet = subnet_matcher(@darknet);
 
-                # ORIGENS CONFIAVEIS
+                # TRUE ORIGINS
                 if ( $classif_src_trusted->($src) ) {
                     log_wrapper("action=|verifica_reputacao| fase=|descartado| info=|src_confiavel| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
                     return;
                     
-                # DESTINOS MALICIOSOS (HONEYPOTS)
+                # MALICIOUS DESTINATIONS (HONEYPOTS)
                 } elsif ( $classif_honeypots->($dst) ) {
                     my $reputation = submit_reputation($src,'malicious','honeypot');
                     my $flow_result = submit_flow($flow,'malicious','honeypot');
                     log_wrapper("action=|set_malicious| info=|dst_honeypot| result_reputation=|$reputation| result_flow=|$flow_result| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
                     return;
 
-                # DESTINOS MALICIOSOS (DARKNET)
+                # MALICIOUS DESTINATIONS (DARKNET)
                 } elsif ( ! $classif_darnet->($dst) ) {
                     my $reputation = submit_reputation($src,'malicious','darknet');
                     my $flow_result = submit_flow($flow,'malicious','darknet');
                     log_wrapper("action=|set_malicious| info=|dst_darknet| result_reputation=|$reputation| result_flow=|$flow_result| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
                     return;
 
-                # DESTINOS SEM SERVICOS
+                # DESTINATIONS WITHOUT SERVICE
                 } elsif ( is_mapped($dst,$dstp) eq 'NOT_OK') {
                     my $reputation = submit_reputation($src,'suspicious','scan');
                     my $flow_result = submit_flow($flow,'malicious','scan');
                     log_wrapper("action=|set_suspicious| info=|dst_not_mapped| result_reputation=|$reputation| result_flow=|$flow_result| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
                     return;
 
-                # ORIGENS CONHECIDAMENTE SUSPEITAS OU MALICIOSAS
+                # KNOWN OR SUSPICIOUS ORIGINS
                 } elsif ( reputation($src) =~ /malicious/ ) {
                     my $reputation = submit_reputation($src,'malicious','scan');
                     my $flow_result = submit_flow($flow,'malicious','scan');
@@ -371,7 +358,7 @@ sub verifica_reputacao {
                     return;
                 }
 
-            } else { # CONEXOES FALSAS
+            } else { # FALSE CONNECTIONS
                 log_wrapper("action=|alert| info=|possivel_ip_spoffing| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
                 return;
             }
@@ -447,7 +434,7 @@ my $af4  = 0;
 my $af6  = 0;
 my $port = $ENV{FLOW_COLLECTOR_PORT};
 log_wrapper("action=|init_main| port=|$ENV{FLOW_COLLECTOR_PORT}|".
-    " ipcode=|$ENV{FLOW_COLLECTOR_IPTYPE}| logtype=|$ENV{FLOW_COLLECTOR_LOG}|");
+    " ipcode=|$ENV{FLOW_COLLECTOR_IPTYPE}| logtype=|LOCAL|");
 
 if ( $ENV{FLOW_COLLECTOR_IPTYPE} eq 'IPV4' ) { $af4 = $af = $IPV4_CODE; }
 if ( $ENV{FLOW_COLLECTOR_IPTYPE} eq 'IPV6' ) { $af6 = $af = $IPV6_CODE; }
