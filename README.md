@@ -1,37 +1,37 @@
 FLOW COLLECTOR
 ==============
 
-Coletor e analisador de datagramas Netflow com integracao com a NMAP::API e a REPUTATION::API.
+Netflow datagram collector and parser with integration with NMAP :: API and REPUTATION :: API.
 
 
-Instalação
+Installation
 ----------
 
-Para usar o FLOW COLLECTOR 
+To use the FLOW COLLECTOR 
 
-* [Readonly](https://metacpan.org/pod/Readonly) -- Usado para gerar as constantes
-* [Net::Syslog](https://metacpan.org/pod/Net::Syslog) -- Usado para o envio de eventos via syslog
-* [Sys::Syslog](https://metacpan.org/pod/Sys::Syslog) -- Usado para o envio de eventos localmente
-* [Net::Subnet](https://metacpan.org/pod/Net::Subnet) -- Usado para fazer o match de endereços IP
-* [Mojo::UserAgent](https://metacpan.org/pod/Mojo::UserAgent) -- Usado para fazer o envio de dados para a REPUTATION::API e a obteção de dados da NMAP::API
+* [Readonly](https://metacpan.org/pod/Readonly) -- Used to generate the constants
+* [Net::Syslog](https://metacpan.org/pod/Net::Syslog) -- Used for sending events via syslog
+* [Sys::Syslog](https://metacpan.org/pod/Sys::Syslog) -- Used for sending events locally
+* [Net::Subnet](https://metacpan.org/pod/Net::Subnet) -- Used to match IP addresses
+* [Mojo::UserAgent](https://metacpan.org/pod/Mojo::UserAgent) -- Used to send data to the REPUTATION :: API and NMAP :: data collection API
 
-Se você estiver instalando somente para testar, você pode executar:
+If you are installing to test only, you can run:
 
 	cpanm Readonly Net::Syslog Sys::Syslog Net:Subnet Mojo::UserAgent
 
-Se você estiver instalando a aplicação para um ambiente de produção, é recomendável que você faça uso da [local::lib](https://metacpan.org/pod/local::lib) para não modificar o Perl instalado em seu sistema. Outra alternativa é usar o [perlbrew](http://perlbrew.pl/).
+If you are installing the application for a production environment, it is recommended that you make use of the [local::lib](https://metacpan.org/pod/local::lib) to not modify Perl installed on your system. Another alternative is to use the [perlbrew](http://perlbrew.pl/).
 
-Para instalar o locallib é recomendado que você crie um usuário limitado para sua aplicação, no caso, você pode criar um usuário chamado `flow_collector` e instalar o [local::lib](https://metacpan.org/pod/local::lib) no home desse usuário.
+To install locallib it is recommended that you create a limited user for your application, in this case, you can create a user called `flow_collector` and install the [local::lib](https://metacpan.org/pod/local::lib) in this user's home.
 
 	cpanm local::lib
 
-Após instalar é necessário acrescentar no arquivo `.bashrc` ou `.profile` as variáveis de ambiente para a sua aplicação. Para obtê-las, execute `perl -Mlocal::lib`.
+After installing it is necessary to add in the file `.bashrc` or `.profile` the environment variables for your application. To get them, execute `perl -Mlocal::lib`.
 
 
-Configuração
+Configuration
 ------------
 
-A configuração da API é feita por variáveis de ambiente. Um exemplo de configuração pode ser visto a seguir:
+The API configuration is done by environment variables. An example configuration can be seen below:
 
 	export FLOW_COLLECTOR_LOG="LOCAL"
 	export FLOW_COLLECTOR_PORT="9993"
@@ -54,9 +54,9 @@ A configuração da API é feita por variáveis de ambiente. Um exemplo de confi
 	export FLOW_CONNECTOR_DST_TRUSTED="8.8.8.8 10.10.0.0/16"
 	export FLOW_CONNECTOR_DARKNET="10.11.0.0/16"
 
-Nesse exemplo, colocamos os eventos para serem gerados localmente, logo deverá ser criada no diretório da aplicação uma pasta chamada `log`.
+In this example, we put the events to be generated locally, so a folder called `log`.
 
-No exemplo a seguir, configuramos para o envio de eventos para um coletor remoto:
+In the following example, we set up for sending events to a remote collector:
 
 	export FLOW_COLLECTOR_LOG="NET"
 	export FLOW_COLLECTOR_SYSLOG_PORT="514"
@@ -81,29 +81,28 @@ No exemplo a seguir, configuramos para o envio de eventos para um coletor remoto
 	export FLOW_CONNECTOR_DST_TRUSTED="8.8.8.8 10.10.0.0/16"
 	export FLOW_CONNECTOR_DARKNET="10.11.0.0/16"
 
-Nesse exemplo, os eventos serão enviados via Syslog para o host 192.168.0.32, na porta 514.
+In this example, events will be sent via Syslog to host 192.168.0.32, on port 514.
 
-
-Uso
+Use
 ---
 
-O uso é bem simples basta executar a aplicação e configurar os equipamentos de rede para enviar os flows para a porta definida em FLOW_COLLECTOR_PORT.
+The use is quite simple just run the application and configure the network equipment to send the flows to the port defined in LOW_COLLECTOR_PORT.
 
 
-Limitações
+Limitations
 --------------------
 
-* A aplicação somente é capaz de receber flows na versão 1 e na versão 5. Em versões futuras será implementada a capacidade de receber novas versões.
-* A aplicação também só faz a checagem dos flows do protocolo TCP com flags.
+* The application is only capable of receiving flows in version 1 and in version 5. In future versions will be implemented the ability to receive new versions.
+* The application also only checks the TCP protocol flows with flags.
 
-Licenciamento
+Licensing
 -------------
 
-Esse software é livre e deve ser distribuido sobre os termos a Apache License v2.
+This software is free and should be distributed over the terms of Apache License v2.
 
 
 Autor
 -----
 
-Copyrigth [Manoel Domingues Junior](http://github.com/mdjunior) <manoel at ufrj dot br>
+Copyright [Manoel Domingues Junior](http://github.com/mdjunior) <manoel at ufrj dot br>
 
