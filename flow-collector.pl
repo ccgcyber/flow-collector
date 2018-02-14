@@ -21,10 +21,10 @@ use Mojo::UserAgent;
 use English qw(-no_match_vars);
 
 if ( eval { my $io_socket = 'IO::Socket::INET6'; require $io_socket; 1; } ) {
-    croak 'Nao foi possivel carregar IO::Socket::INET6';
+    croak 'Could not load IO::Socket::INET6';
 }
 if ( eval { my $socket6 = 'Socket6'; require $socket6; 1; } ) {
-    croak 'Nao foi possivel carregar Socket6';
+    croak 'Could not load Socket6';
 }
 our $VERSION = 1.1;
 
@@ -52,7 +52,7 @@ Readonly my $HEADER_NETFLOW_V9     => 36;
 Readonly my $SIZE_NETFLOW_V9       => 48;
 Readonly my $NETFLOW_V9_CODE       => 9;
 
-Readonly my $CINQUENTA_DOIS        => 52;
+Readonly my $FIFTY_TWO             => 52;
 
 Readonly my $PACKET_PAYLOAD        => 8192;
 Readonly my $MAX_FAILURE           => 5;
@@ -164,7 +164,7 @@ sub process_nf_v1 {
 
     for ( 0 .. $header{flows} - 1 ) {
         my $off = $HEADER_NETFLOW_V1 + ( $SIZE_NETFLOW_V1 * $_ );
-        my $ptr = substr $pkt, $off, $CINQUENTA_DOIS;
+        my $ptr = substr $pkt, $off, $FIFTY_TWO;
 
         %flow = qw();
 
@@ -244,7 +244,7 @@ sub process_nf_v5 {
 
     for ( 0 .. $header{flows} - 1 ) {
         my $off = $HEADER_NETFLOW_V5 + ( $SIZE_NETFLOW_V5 * $_ );
-        my $ptr = substr $pkt, $off, $CINQUENTA_DOIS;
+        my $ptr = substr $pkt, $off, $FIFTY_TWO;
 
         %flow = qw();
 
@@ -274,7 +274,7 @@ sub process_nf_v5 {
             $flow{pkts}, $flow{bytes}, $flow{tcp_flags};
         log_wrapper($log_);
 
-        verifica_reputacao(\%flow);
+        verify_reputation(\%flow);
     }
     return;
 }
@@ -282,7 +282,7 @@ sub process_nf_v5 {
 sub process_nf_v9 {
 }
 
-sub verifica_reputacao {
+sub verify_reputation {
     my $flow = shift;
 
     my $src = $flow->{src};
@@ -294,7 +294,7 @@ sub verifica_reputacao {
 
     if ($proto == $TCP_CODE) {
         if ( $flow->{tcp_flags} ) { # Looking packages with flags
-            log_wrapper("action=|verifica_reputacao| fase=|fase1| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp| flags=|$flags|");
+            log_wrapper("action=|verify_reputation| phase=|phase1| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp| flags=|$flags|");
 
             my @network = split / /, $ENV{FLOW_CONNECTOR_NETWORK};
             my $classif_network = subnet_matcher(@network);
@@ -305,7 +305,7 @@ sub verifica_reputacao {
 
                 # DIFFERENT DESTINATIONS
                 if ( $classif_dst_trusted->($dst) ) {
-                    log_wrapper("action=|verifica_reputacao| fase=|descartado| info=|dst_confiavel| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
+                    log_wrapper("action=|verify_reputation| phase=|discarded| info=|dst_trustworthy| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
                     return;
 
                 # KNOWN OR SUSPENDED DESTINATIONS
@@ -333,7 +333,7 @@ sub verifica_reputacao {
 
                 # TRUE ORIGINS
                 if ( $classif_src_trusted->($src) ) {
-                    log_wrapper("action=|verifica_reputacao| fase=|descartado| info=|src_confiavel| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
+                    log_wrapper("action=|verify_reputation| phase=|discarded| info=|src_trustworthy| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
                     return;
                     
                 # MALICIOUS DESTINATIONS (HONEYPOTS)
@@ -371,16 +371,16 @@ sub verifica_reputacao {
                 }
 
             } else { # FALSE CONNECTIONS
-                log_wrapper("action=|alert| info=|possivel_ip_spoffing| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
+                log_wrapper("action=|alert| info=|possible_ip_spoofing| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp|");
                 return;
             }
 
         } else {
-            log_wrapper("action=|verifica_reputacao| fase=|descartado| info=|nao_possui_flags| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp| flags=|$flags|");
+            log_wrapper("action=|verify_reputation| phase=|discarded| info=|no_it_has_flags| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp| flags=|$flags|");
             return;
         }
     } else {
-        log_wrapper("action=|verifica_reputacao| fase=|descartado| info=|nao_tcp| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp| proto=|$proto");
+        log_wrapper("action=|verify_reputation| phase=|discarded| info=|no_tcp| src=|$src| srcp=|$srcp| dst=|$dst| dstp=|$dstp| proto=|$proto");
         return;
     }
 }
