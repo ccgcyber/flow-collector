@@ -1,7 +1,7 @@
 FLOW COLLECTOR
 ==============
 
-Netflow datagram collector and parser with integration with NMAP :: API and REPUTATION :: API.
+Netflow datagram collector and parser with integration with NMAP::API and REPUTATION::API.
 
 
 Installation
@@ -18,14 +18,6 @@ To use the FLOW COLLECTOR
 If you are installing to test only, you can run:
 
 	cpanm Readonly Net::Syslog Sys::Syslog Net:Subnet Mojo::UserAgent
-
-If you are installing the application for a production environment, it is recommended that you make use of the [local::lib](https://metacpan.org/pod/local::lib) to not modify Perl installed on your system. Another alternative is to use the [perlbrew](http://perlbrew.pl/).
-
-To install locallib it is recommended that you create a limited user for your application, in this case, you can create a user called `flow_collector` and install the [local::lib](https://metacpan.org/pod/local::lib) in this user's home.
-
-	cpanm local::lib
-
-After installing it is necessary to add in the file `.bashrc` or `.profile` the environment variables for your application. To get them, execute `perl -Mlocal::lib`.
 
 
 Configuration
@@ -86,13 +78,14 @@ In this example, events will be sent via Syslog to host 192.168.0.32, on port 51
 Use
 ---
 
-The use is quite simple just run the application and configure the network equipment to send the flows to the port defined in LOW_COLLECTOR_PORT.
+The use is quite simple just run the application and configure the network equipment to send the flows to the port defined in FLOW_COLLECTOR_PORT.
 
 
 Limitations
 --------------------
 
-* The application is only capable of receiving flows in version 1 and in version 5. In future versions will be implemented the ability to receive new versions.
+* The application is only capable of receiving flows in version 1 and in version 5.
+  adjustments being made for version 9.
 * The application also only checks the TCP protocol flows with flags.
 
 Licensing
@@ -101,8 +94,10 @@ Licensing
 This software is free and should be distributed over the terms of Apache License v2.
 
 
-Autor
+Authur
 -----
 
 Copyright [Manoel Domingues Junior](http://github.com/mdjunior) <manoel at ufrj dot br>
+Copyright [CCG, LLC](http://www.cancgroup.com)
+
 
