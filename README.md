@@ -94,10 +94,11 @@ Licensing
 This software is free and should be distributed over the terms of Apache License v2.
 
 
-Authur
+Author
 -----
 
 Copyright [Manoel Domingues Junior](http://github.com/mdjunior) <manoel at ufrj dot br>
+
 Copyright [CCG, LLC](http://www.cancgroup.com)
 
 
