@@ -26,7 +26,7 @@ if ( eval { my $io_socket = 'IO::Socket::INET6'; require $io_socket; 1; } ) {
 if ( eval { my $socket6 = 'Socket6'; require $socket6; 1; } ) {
     croak 'Nao foi possivel carregar Socket6';
 }
-our $VERSION = 1.0;
+our $VERSION = 1.1;
 
 my $af;
 
@@ -36,17 +36,26 @@ Readonly my $MINUTES_IN_HOUR       => 60;
 Readonly my $HOURS_IN_DAY          => 24;
 Readonly my $DAYS_IN_WEEK          => 7;
 Readonly my $WEEKS_IN_YEAR         => 52;
+
 Readonly my $IPV4_CODE             => 4;
 Readonly my $IPV6_CODE             => 6;
+
 Readonly my $HEADER_NETFLOW_V1     => 16;
 Readonly my $SIZE_NETFLOW_V1       => 48;
-Readonly my $CINQUENTA_DOIS        => 52;
+Readonly my $NETFLOW_V1_CODE       => 1;
+
 Readonly my $HEADER_NETFLOW_V5     => 24;
 Readonly my $SIZE_NETFLOW_V5       => 48;
+Readonly my $NETFLOW_V5_CODE       => 5;
+
+Readonly my $HEADER_NETFLOW_V9     => 36;
+Readonly my $SIZE_NETFLOW_V9       => 48;
+Readonly my $NETFLOW_V9_CODE       => 9;
+
+Readonly my $CINQUENTA_DOIS        => 52;
+
 Readonly my $PACKET_PAYLOAD        => 8192;
 Readonly my $MAX_FAILURE           => 5;
-Readonly my $NETFLOW_V5_CODE       => 5;
-Readonly my $NETFLOW_V1_CODE       => 1;
 Readonly my $TCP_CODE              => 6;
 ############################################################################
 
@@ -270,6 +279,9 @@ sub process_nf_v5 {
     return;
 }
 
+sub process_nf_v9 {
+}
+
 sub verifica_reputacao {
     my $flow = shift;
 
@@ -485,6 +497,7 @@ while (1) {
 
     if ( $ver == $NETFLOW_V1_CODE ) { process_nf_v1( $sender, $payload ); }
     elsif ( $ver == $NETFLOW_V5_CODE ) { process_nf_v5( $sender, $payload ); }
+    elsif ( $ver == $NETFLOW_V9_CODE ) { process_nf_v9( $sender, $payload ); }
     else {
         log_wrapper ("action=|falha| info=|Unsupported netflow version $ver|");
         next;
